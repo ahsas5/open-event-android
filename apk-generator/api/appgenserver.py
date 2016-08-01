@@ -24,27 +24,22 @@ def replace(file_path, pattern, subst):
     #Move new file
     move(abs_path, file_path)
 
-arg = sys.argv[1]
+email = sys.argv[1]
 # Path to be created
-path = "/var/www/html/files/"+str(arg)
-print path
-if not os.path.exists(path):
-    os.makedirs(path)
-
-firebase = firebase.FirebaseApplication('https://app-generator.firebaseio.com', None)
-result = firebase.get('/users', str(arg))
-jsonData = json.dumps(result)
-email = json.dumps(result['email'])
-email = email.replace('"', '')
-app_name = json.dumps(result['name'])
-app_name = app_name.replace('"', '')
-print app_name
-print email
-directory = path + "/" + email
+directory = "/var/www/html/api/files/"+str(email)
 print directory
-
 if not os.path.exists(directory):
     os.makedirs(directory)
+
+
+app_name = sys.argv[2]
+print app_name
+print email
+
+
+print directory
+
+jsonData = " { \n"+'"Email"'+": " + '"' + sys.argv[1] + '",\n'+'"App_Name"'+": "+'"' +sys.argv[2]+'",\n'+'"Api_Link"'+": " + '"' + sys.argv[3] + '"\n }'
 
 subprocess.call(['/var/www/html/clone.sh', directory])
 # subprocess.call(['/var/www/html/setPerm.sh', directory])
@@ -56,19 +51,8 @@ absDirectory = directory + "/open-event-android/android/"
 replace(directory+"/open-event-android/android/app/build.gradle", '"org.fossasia.openevent"', '"org.fossasia.openevent.'+app_name.split()[0]+'"')
 replace(directory+"/open-event-android/android/app/src/main/res/values/strings.xml", 'OpenEvent', app_name.split()[0])
 
-#TODO: Add zip path
-zip_ref = zipfile.ZipFile(path_to_zip_file, 'r')
-zip_ref.extractall(directory)
-zip_ref.close()
-#TODO: Change path here
-for f in os.listdir(directory+ "/zip"):
-	if f.endswith('.json'):
-		copyfile(f, directoy + "open-event-android/android/app/src/main/assets/"+f)
-	elif f.endswith('.png'):
-		copyfile(f, directory + "open-event-android/android/app/src/main/res/drawable"+f)
-replace(directory+"/open-event-android/android/app/src/main/res/values/strings.xml", 'mipmap/ic_launcher', 'drawable/' + f)
 subprocess.call(['/var/www/html/buildApk.sh', directory])
 subprocess.call(['/var/www/html/email.sh', directory, email])
-subprocess.call(['/var/www/html/copyApk.sh', absDirectory, arg])
+#subprocess.call(['/var/www/html/copyApk.sh', absDirectory])
 
 print "Script End"
